@@ -47,7 +47,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary"> + Tambah User</button>
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">⬅ Kembali ke Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">⬅ Kembali</a>
     </form>
 </div>
 @endsection

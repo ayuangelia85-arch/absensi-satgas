@@ -17,10 +17,15 @@ class User extends Authenticatable
         'status',
         'role',
         'password',
-        
     ];
 
     protected $hidden = ['password'];
+
+    // 👉 Tambahkan ini agar Auth::attempt pakai nim_nip
+    public function getAuthIdentifierName()
+    {
+        return 'nim_nip';
+    }
 
     public function absensi()
     {

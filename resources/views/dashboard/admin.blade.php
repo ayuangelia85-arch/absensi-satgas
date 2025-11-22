@@ -73,6 +73,10 @@
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
                             </form>
+                            <a href="{{ route('absensi.location', $item->id) }}" 
+                                class="btn btn-sm btn-success">
+                                Lihat Lokasi
+                            </a>
                         </td>
                     </tr>
                 @empty

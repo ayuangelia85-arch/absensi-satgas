@@ -90,9 +90,7 @@ class UserAbsensiController extends Controller
 
     public function showLocation($id)
     {
-        $absensi = Absensi::where('id', $id)
-                        ->where('user_id', auth()->id())
-                        ->firstOrFail();
+        $absensi = Absensi::findOrFail($id);
 
         return view('absensi.location', compact('absensi'));
     }

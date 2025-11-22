@@ -12,11 +12,21 @@ use App\Http\Controllers\LaporanController;
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Forgot password
+Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+
+// Reset password
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::put('/admin/absensi/{id}/update', [AdminController::class, 'updateKeterangan'])->name('admin.absensi.updateKeterangan');
     Route::delete('/admin/absensi/{id}/delete', [AdminController::class, 'delete'])->name('admin.absensi.delete');
+    Route::get('/admin/absensi/{id}/location', [UserAbsensiController::class, 'showLocation'])->name('absensi.location');
 
     Route::get('/user/create', [AdminController::class, 'create'])->name('admin.user.create');
     Route::post('/user/store', [AdminController::class, 'store'])->name('admin.user.store');
@@ -48,5 +58,6 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     // Check-out
     Route::post('/absensi/keluar', [UserAbsensiController::class, 'keluar'])->name('user.absensi.keluar');
 
-    Route::get('/absensi/location/{id}', [UserAbsensiController::class, 'showLocation'])->name('user.absensi.location');
+    
+
 });

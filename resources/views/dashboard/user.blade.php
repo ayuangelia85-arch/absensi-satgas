@@ -52,14 +52,7 @@
             </form>
         @endif
     </div>
-    @if ($absensiHariIni)
-        <a href="{{ route('user.absensi.location', $absensiHariIni->id) }}" 
-        class="btn btn-info mt-2">
-            Lihat Lokasi Check-In
-        </a>
-    @endif
-
-
+    
     {{-- Statistik Bulan Ini --}}
     <div class="card mt-4 shadow-sm p-4">
         <h5>Rekap Bulan Ini</h5>
