@@ -23,4 +23,14 @@ class AdminAbsensiController extends Controller
         return view('absensi.create');
     }
 
+    public function updateKeterangan(Request $request, $id)
+    {
+        $absensi = Absensi::findOrFail($id);
+        $absensi->update([
+            'keterangan' => $request->keterangan
+        ]);
+
+        return redirect()->back()->with('success', 'Keterangan berhasil diubah!');
+    }
+
 }

@@ -14,8 +14,16 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::put('/admin/absensi/{id}/update', [AdminController::class, 'updateKeterangan'])->name('admin.absensi.updateKeterangan');
+    Route::delete('/admin/absensi/{id}/delete', [AdminController::class, 'delete'])->name('admin.absensi.delete');
 
+    Route::get('/user/create', [AdminController::class, 'create'])->name('admin.user.create');
+    Route::post('/user/store', [AdminController::class, 'store'])->name('admin.user.store');
+    Route::get('/user/list', [AdminController::class, 'indexUser'])->name('admin.user.index');
+    Route::get('/user/{id}/edit', [AdminController::class, 'edit'])->name('admin.user.edit');
+    Route::put('/user/{id}', [UserController::class, 'update'])->name('admin.user.update');
+    Route::delete('/user/{id}', [AdminController::class, 'destroyUser'])->name('admin.user.destroy');
     // ✅ Route resource sudah otomatis mencakup semua route absensi
     Route::resource('absensi', AdminAbsensiController::class);
    
@@ -28,14 +36,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 });
 
 Route::middleware(['auth', 'role:user'])->group(function () {
-    Route::get('/dashboard/user', [UserController::class, 'index'])->name('user.dashboard');
+    // dashboard user
+    Route::get('/dashboard/user', [UserAbsensiController::class, 'index'])->name('user.dashboard');
 
     // Halaman absensi user
     Route::get('/absensi', [UserAbsensiController::class, 'index'])->name('user.absensi');
 
-    // Check In
+    // Check-in
     Route::post('/absensi/masuk', [UserAbsensiController::class, 'store'])->name('user.absensi.masuk');
 
-    // Check Out
+    // Check-out
     Route::post('/absensi/keluar', [UserAbsensiController::class, 'keluar'])->name('user.absensi.keluar');
+
+    Route::get('/absensi/location/{id}', [UserAbsensiController::class, 'showLocation'])->name('user.absensi.location');
 });

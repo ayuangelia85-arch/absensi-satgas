@@ -14,8 +14,10 @@ class Absensi extends Model
         'tanggal',
         'jam_masuk',
         'jam_keluar',
-        'status',
+        'durasi_jam',
         'keterangan',
+        'latitude',
+        'longitude',
     ];
 
     public function user()

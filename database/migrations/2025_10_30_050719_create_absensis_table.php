@@ -15,8 +15,10 @@ return new class extends Migration
             $table->date('tanggal');
             $table->time('jam_masuk')->nullable();
             $table->time('jam_keluar')->nullable();
-            $table->enum('status', ['hadir', 'izin', 'sakit', 'alpa'])->default('hadir');
-            $table->text('keterangan')->nullable();
+            $table->decimal('durasi_jam', 5, 2)->nullable();
+            $table->enum('keterangan', ['hadir', 'izin', 'sakit', 'alpa'])->default('hadir');
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->timestamps();
         });
     }

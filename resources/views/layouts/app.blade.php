@@ -10,7 +10,7 @@
             background-color: #f9fafb;
         }
         .navbar {
-            background-color: #0d6efd;
+            background-color: #fa809d;
         }
         .navbar-brand, .nav-link, .navbar-text {
             color: white !important;
@@ -41,7 +41,10 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     @if(Auth::user()->role === 'admin')
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('absensi.index') }}">Kelola Absensi</a>
+                            <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.user.index') }}">Daftar User</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('laporan.index') }}">Laporan</a>

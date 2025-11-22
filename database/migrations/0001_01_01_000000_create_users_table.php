@@ -11,9 +11,10 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('nim_nip')->unique();
-            $table->string('password');
+            $table->string('email')->unique()->nullable();
+            $table->string('status')->nullable();
             $table->enum('role', ['admin', 'user'])->default('user');
-            $table->string('jabatan')->nullable();
+            $table->string('password');
             $table->timestamps();
         });
     }

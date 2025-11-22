@@ -11,17 +11,39 @@ class UserAbsensiController extends Controller
     {
         $user = auth()->user();
 
+        // Ambil absensi hari ini
         $absensiHariIni = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', now('Asia/Jakarta')->toDateString())
             ->first();
 
-        return view('dashboard.user', compact('user', 'absensiHariIni'));
+        // Ambil total jam kerja bulan ini
+        $absensiBulanIni = Absensi::where('user_id', $user->id)
+            ->whereMonth('tanggal', now('Asia/Jakarta')->month)
+            ->get();
+
+        $totalJam = 0;
+        foreach ($absensiBulanIni as $absen) {
+            if ($absen->jam_masuk && $absen->jam_keluar) {
+                $masuk = strtotime($absen->jam_masuk);
+                $keluar = strtotime($absen->jam_keluar);
+                $totalJam += ($keluar - $masuk) / 3600; // hitung jam
+            }
+        }
+
+        return view('dashboard.user', compact('user', 'absensiHariIni', 'totalJam'));
     }
 
-    public function store()
+    public function store(Request $request)
     {
         $user = auth()->user();
 
+        // Validasi koordinat
+        $request->validate([
+            'latitude' => 'required',
+            'longitude' => 'required',
+        ]);
+
+        // Cek apakah sudah absen hari ini
         $cek = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', now('Asia/Jakarta')->toDateString())
             ->first();
@@ -30,12 +52,14 @@ class UserAbsensiController extends Controller
             return back()->with('error', 'Kamu sudah melakukan Check-In hari ini!');
         }
 
+        // Simpan absensi
         Absensi::create([
             'user_id' => $user->id,
             'tanggal' => now('Asia/Jakarta')->toDateString(),
             'jam_masuk' => now('Asia/Jakarta')->toTimeString(),
-            'status' => 'hadir',
-            'keterangan' => null,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'keterangan' => 'hadir',
         ]);
 
         return back()->with('success', 'Berhasil Check-In!');
@@ -63,4 +87,15 @@ class UserAbsensiController extends Controller
 
         return back()->with('success', 'Berhasil Check-Out!');
     }
+
+    public function showLocation($id)
+    {
+        $absensi = Absensi::where('id', $id)
+                        ->where('user_id', auth()->id())
+                        ->firstOrFail();
+
+        return view('absensi.location', compact('absensi'));
+    }
+
+
 }
