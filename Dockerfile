@@ -1,26 +1,35 @@
-# Gunakan image PHP 8.2 dengan Apache bawaan
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Install ekstensi yang dibutuhkan Laravel
-RUN docker-php-ext-install pdo pdo_mysql
+# Install system deps
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    git \
+    curl \
+    libzip-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install Composer
+# Copy composer binary
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www/html
+WORKDIR /var/www
 
-# Copy semua file project ke dalam container
+# Copy project files
 COPY . .
 
-# Install semua dependency Laravel
-RUN composer install --no-dev --optimize-autoloader
+# Install composer deps (production)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Generate key Laravel
-RUN php artisan key:generate
+# Generate app key if not present (optional)
+# RUN php artisan key:generate
 
-# Expose port 10000 (biar Render bisa akses)
-EXPOSE 10000
+# Make storage writable
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache || true
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache || true
 
-# Jalankan Laravel
-CMD php artisan serve --host=0.0.0.0 --port=10000
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
