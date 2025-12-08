@@ -56,14 +56,15 @@
                     @endif
                 </ul>
 
-                <span class="navbar-text me-3">
-                    {{ Auth::user()->name }}
-                </span>
+                <div class="d-flex align-items-center gap-3">
 
-                {{-- 🔽 Logout pakai POST --}}
-                <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                <a href="{{ route('profil') }}" class="text-white fw-bold text-decoration-none">
+                    {{ Auth::user()->name }}
+                </a>
+
+                <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                    <button class="btn btn-light btn-sm">Logout</button>
                 </form>
             @endauth
         </div>

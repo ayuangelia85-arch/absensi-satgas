@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Absensi</title>
+    <title>Rekap Absensi Bulanan</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -12,55 +12,45 @@
 </head>
 <body>
 
-<h2 style="text-align:center">Laporan Absensi</h2>
+<h2 style="text-align:center">Rekap Absensi Bulanan</h2>
 
-@if(request('$start_date') || request('$end_date'))
-        <p><strong>Periode:</strong>
-            {{ $request('$start_date') ? \Carbon\Carbon::parse(request('$start_date'))->translatedFormat('d F Y') : '–' }}
-            s/d
-            {{ request('end_date') ? \Carbon\Carbon::parse(request('end_date'))->translatedFormat('d F Y') : '–' }}
-        </p>
-    @endif
+@php
+    use Carbon\Carbon;
+    $namaBulan = Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F');
+@endphp
 
-    <p class="timestamp">
-        Dicetak pada: {{ \Carbon\Carbon::now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') }} WIB
-    </p>
+<p><strong>Bulan:</strong> {{ $namaBulan }} {{ $tahun }}</p>
+<p><strong>Target Jam:</strong> {{ $targetJam }} jam</p>
 
 <table>
     <thead>
         <tr>
             <th>No</th>
-            <th>Nama</th>
-            <th>Tanggal</th>
-            <th>Jam Masuk</th>
-            <th>Jam Keluar</th>
-            <th>Total Waktu</th>
+            <th>Nama User</th>
+            <th>Total Jam</th>
             <th>Keterangan</th>
         </tr>
     </thead>
+
     <tbody>
-        @foreach($laporan as $i => $l)
+        @foreach($rekap as $i => $r)
             @php
-                $total = '-';
-                if ($l->jam_masuk && $l->jam_keluar) {
-                    $m = \Carbon\Carbon::parse($l->jam_masuk);
-                    $k = \Carbon\Carbon::parse($l->jam_keluar);
-                    $d = $k->diff($m);
-                    $total = $d->format('%H:%I:%S');
-                }
+                $total = number_format($r->total_jam, 1);
+                $status = $r->total_jam >= $targetJam ? 'Terpenuhi' : 'Tidak Terpenuhi';
             @endphp
             <tr>
                 <td>{{ $i + 1 }}</td>
-                <td>{{ $l->user->name }}</td>
-                <td>{{ \Carbon\Carbon::parse($l->tanggal)->translatedFormat('d F Y') }}</td>
-                <td>{{ $l->jam_masuk }}</td>
-                <td>{{ $l->jam_keluar }}</td>
-                <td>{{ $total }}</td>
-                <td>{{ ucfirst($l->keterangan) }}</td>
+                <td>{{ $r->user->name ?? '-' }}</td>
+                <td>{{ $total }} jam</td>
+                <td>{{ $status }}</td>
             </tr>
         @endforeach
     </tbody>
 </table>
+
+<p style="margin-top:15px;">
+    <em>Dicetak pada {{ now()->translatedFormat('d F Y, H:i') }} WIB</em>
+</p>
 
 </body>
 </html>

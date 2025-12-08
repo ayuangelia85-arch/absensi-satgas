@@ -65,6 +65,33 @@ class UserAbsensiController extends Controller
         return back()->with('success', 'Berhasil Check-In!');
     }
 
+     public function update(Request $request, $id)
+    {
+        // validasi input
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'nim_nip' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'status' => 'required|string',
+            'role' => 'required|string',
+        ]);
+
+        // ambil user berdasarkan id
+        $user = User::findOrFail($id);
+
+        // update data user
+        $user->update([
+            'name' => $request->name,
+            'nim_nip' => $request->nim_nip,
+            'email' => $request->email,
+            'status' => $request->status,
+            'role' => $request->role,
+        ]);
+
+        // redirect balik ke daftar user
+        return redirect()->route('admin.user.index')->with('success', 'Data user berhasil diperbarui!');
+    }
+
     public function keluar()
     {
         $user = auth()->user();
@@ -93,6 +120,12 @@ class UserAbsensiController extends Controller
         $absensi = Absensi::findOrFail($id);
 
         return view('absensi.location', compact('absensi'));
+    }
+
+      public function profil()
+    {
+        $user = auth()->user();
+        return view('dashboard.profil', compact('user'));
     }
 
 

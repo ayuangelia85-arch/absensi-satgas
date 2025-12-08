@@ -21,9 +21,17 @@ Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])-
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/profil', [AdminController::class, 'profil'])->name('profil');
+    Route::get('/profil/edit', [AdminController::class, 'editProfil'])->name('profil.edit');
+    Route::post('/profil/update', [AdminController::class, 'updateProfil'])->name('profil.update');
+
+});
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::post('/absensi/manual', [AdminController::class, 'storeManual'])->name('admin.absensi.storeManual');
     Route::put('/admin/absensi/{id}/update', [AdminController::class, 'updateKeterangan'])->name('admin.absensi.updateKeterangan');
     Route::delete('/admin/absensi/{id}/delete', [AdminController::class, 'delete'])->name('admin.absensi.delete');
     Route::get('/admin/absensi/{id}/location', [UserAbsensiController::class, 'showLocation'])->name('absensi.location');
@@ -32,10 +40,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/user/store', [AdminController::class, 'store'])->name('admin.user.store');
     Route::get('/user/list', [AdminController::class, 'indexUser'])->name('admin.user.index');
     Route::get('/user/{id}/edit', [AdminController::class, 'edit'])->name('admin.user.edit');
-    Route::put('/user/{id}', [UserController::class, 'update'])->name('admin.user.update');
+    Route::put('/user/{id}', [UserAbsensiController::class, 'update'])->name('admin.user.update');
     Route::delete('/user/{id}', [AdminController::class, 'destroyUser'])->name('admin.user.destroy');
-    // ✅ Route resource sudah otomatis mencakup semua route absensi
-    Route::resource('absensi', AdminAbsensiController::class);
    
     // ✅ Route resource laporan juga otomatis mencakup CRUD
     Route::resource('laporan', LaporanController::class);
