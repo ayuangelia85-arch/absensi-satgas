@@ -10,6 +10,17 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+
     <form action="{{ route('admin.user.store') }}" method="POST">
         @csrf
 
@@ -30,7 +41,7 @@
 
         <div class="mb-3">
             <label for="status" class="form-label">Status</label>
-            <input type="text" name="status" class="form-control">
+            <input type="text" name="status" class="form-control" required>
         </div>
 
         <div class="mb-3">

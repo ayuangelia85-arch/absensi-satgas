@@ -44,6 +44,26 @@ class UserAbsensiController extends Controller
         ]);
 
         // Cek apakah sudah absen hari ini
+        $campusLat = -6.234943;
+        $campusLng = 106.747206;
+        $radius = 5000; // meter
+
+        // hitung jarak user ke kampus
+        $distance = $this->distance(
+            $request->latitude,
+            $request->longitude,
+            $campusLat,
+            $campusLng
+        );
+
+        if ($distance > $radius) {
+            return back()->with(
+                'error',
+                'Absensi gagal! Kamu berada di luar area Kampus Budi Luhur.'
+            );
+        }
+
+        // cek sudah absen hari ini
         $cek = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', now('Asia/Jakarta')->toDateString())
             ->first();
@@ -52,7 +72,7 @@ class UserAbsensiController extends Controller
             return back()->with('error', 'Kamu sudah melakukan Check-In hari ini!');
         }
 
-        // Simpan absensi
+        // simpan absensi
         Absensi::create([
             'user_id' => $user->id,
             'tanggal' => now('Asia/Jakarta')->toDateString(),
@@ -62,8 +82,25 @@ class UserAbsensiController extends Controller
             'keterangan' => 'hadir',
         ]);
 
-        return back()->with('success', 'Berhasil Check-In!');
+        return back()->with('success', 'Berhasil Check-In di area kampus!');
     }
+
+    private function distance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // meter
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
 
      public function update(Request $request, $id)
     {

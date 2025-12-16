@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Absensi;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+use App\Mail\UserCreatedMail;
+
 
 class AdminController extends Controller
 {
@@ -137,6 +142,7 @@ class AdminController extends Controller
             $user->photo = $filename;
         }
 
+
         $user->save();
 
         return redirect()->route('profil')->with('success', 'Profil berhasil diperbarui!');
@@ -153,24 +159,33 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'nim_nip' => 'required|unique:users',
+            'nim_nip' => 'required|string|max:10|unique:users',
             'email' => 'required|email|unique:users',
             'status' => 'required',
             'role' => 'required',
-            'password' => 'required|min:6',
+            'password' => ['required','string','min:7','max:10',
+            Password::min(7)->mixedCase()->symbols(),],
         ]);
 
-        User::create([
+        $plainPassword = $request->password;
+
+        $user = User::create([
             'name' => $request->name,
             'nim_nip' => $request->nim_nip,
             'email' => $request->email,
             'status' => $request->status,
             'role' => $request->role,
-            'password' => bcrypt($request->password),
+            'password' => Hash::make($plainPassword),
         ]);
 
-        return redirect()->route('admin.user.index')->with('success', 'User baru berhasil ditambahkan!');
+        // kirim email ke user
+        Mail::to($user->email)->send(
+            new UserCreatedMail($user, $plainPassword)
+        );
 
+        return redirect()
+            ->route('admin.user.index')
+            ->with('success', 'User baru berhasil ditambahkan & email terkirim!');
     }
 
         public function edit($id)
