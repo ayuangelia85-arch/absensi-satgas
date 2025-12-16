@@ -53,6 +53,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('user.absensi') }}">Absensi</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('user.absensi.history') }}">History Absensi</a>
+                        </li>
                     @endif
                 </ul>
 

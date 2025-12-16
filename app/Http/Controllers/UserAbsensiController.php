@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Absensi;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class UserAbsensiController extends Controller
 {
@@ -46,7 +47,7 @@ class UserAbsensiController extends Controller
         // Cek apakah sudah absen hari ini
         $campusLat = -6.234943;
         $campusLng = 106.747206;
-        $radius = 5000; // meter
+        $radius = 800; // meter
 
         // hitung jarak user ke kampus
         $distance = $this->distance(
@@ -128,6 +129,42 @@ class UserAbsensiController extends Controller
         // redirect balik ke daftar user
         return redirect()->route('admin.user.index')->with('success', 'Data user berhasil diperbarui!');
     }
+
+    
+
+    public function history(Request $request)
+    {
+        $user = auth()->user();
+
+        // ambil bulan & tahun dari request (default: bulan ini)
+        $bulan = $request->bulan ?? now('Asia/Jakarta')->month;
+        $tahun = $request->tahun ?? now('Asia/Jakarta')->year;
+
+        // ambil data absensi per bulan
+        $absensis = Absensi::where('user_id', $user->id)
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
+        // hitung total jam kerja
+        $totalJam = 0;
+        foreach ($absensis as $absen) {
+            if ($absen->jam_masuk && $absen->jam_keluar) {
+                $masuk = strtotime($absen->jam_masuk);
+                $keluar = strtotime($absen->jam_keluar);
+                $totalJam += ($keluar - $masuk) / 3600;
+            }
+        }
+
+        return view('dashboard.absensi-history', compact(
+            'absensis',
+            'bulan',
+            'tahun',
+            'totalJam'
+        ));
+    }
+
 
     public function keluar()
     {

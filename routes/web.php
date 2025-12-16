@@ -61,6 +61,8 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     // Check-in
     Route::post('/absensi/masuk', [UserAbsensiController::class, 'store'])->name('user.absensi.masuk');
 
+    Route::get('/user/absensi/history', [UserAbsensiController::class, 'history'])->name('user.absensi.history');
+
     // Check-out
     Route::post('/absensi/keluar', [UserAbsensiController::class, 'keluar'])->name('user.absensi.keluar');
 
