@@ -9,51 +9,89 @@
         Selamat datang, <strong>{{ $user->name }}</strong> 👋
     </div>
 
-    {{-- Pesan sukses/error --}}
-    @if (session('success'))
+    {{-- Tombol lihat history --}}
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ route('user.absensi.history') }}" class="btn btn-outline-secondary btn-sm">
+            📄 Lihat Riwayat Absensi
+        </a>
+    </div>
+
+    {{-- Pesan --}}
+    @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
-    @elseif (session('error'))
+    @elseif(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    {{-- Kartu absensi hari ini --}}
+    {{-- Kartu absensi --}}
     <div class="card mt-4 shadow-sm p-4">
         <h5>Status Absensi Hari Ini</h5>
         <hr>
 
-        @if ($absensiHariIni)
-            <p><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($absensiHariIni->tanggal)->translatedFormat('d F Y') }}</p>
-            <p><strong>Jam Masuk:</strong> {{ $absensiHariIni->jam_masuk ?? '-' }}</p>
-            <p><strong>Jam Keluar:</strong> {{ $absensiHariIni->jam_keluar ?? '-' }}</p>
-            <p><strong>Keterangan:</strong> {{ ucfirst($absensiHariIni->keterangan ?? '-') }}</p>
-            <p><strong>Durasi:</strong> {{ $absensiHariIni->durasi_jam ? $absensiHariIni->durasi_jam . ' jam' : '-' }}</p>
+        {{-- BELUM CHECK-IN --}}
+        @if(!$status['sudah_checkin'])
+            <p class="text-muted">Kamu belum melakukan absensi hari ini.</p>
 
-            {{-- Jika belum check-out --}}
-            @if (!$absensiHariIni->jam_keluar)
-                <form action="{{ route('user.absensi.keluar') }}" method="POST" id="checkoutForm" style="display:inline;">
-                    @csrf
-                    <input type="hidden" name="latitude" id="latitude_out">
-                    <input type="hidden" name="longitude" id="longitude_out">
-                    <button type="submit" class="btn btn-warning">Check Out</button>
-                </form>
-            @else
-                <div class="text-success mt-2"><strong>Sudah Check-Out</strong></div>
-            @endif
-
-        @else
-            <p class="text-muted">Belum melakukan absensi hari ini.</p>
-
-            {{-- Form Check-In --}}
-            <form action="{{ route('user.absensi.masuk') }}" method="POST" id="checkinForm" style="display:inline;">
+            <form action="{{ route('user.absensi.masuk') }}" method="POST">
                 @csrf
                 <input type="hidden" name="latitude" id="latitude_in">
                 <input type="hidden" name="longitude" id="longitude_in">
                 <button type="submit" class="btn btn-primary">Check In</button>
             </form>
         @endif
+
+        {{-- SUDAH CHECK-IN --}}
+        @if($status['sudah_checkin'])
+            <p><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($absensiHariIni->tanggal)->translatedFormat('d F Y') }}</p>
+            <p><strong>Jam Masuk:</strong> {{ $absensiHariIni->jam_masuk }}</p>
+            <p><strong>Jam Keluar:</strong> {{ $absensiHariIni->jam_keluar ?? '-' }}</p>
+        @endif
+
+        {{-- BELUM ISI KEGIATAN --}}
+        @if($status['sudah_checkin'] && !$status['sudah_kegiatan'])
+            <div class="alert alert-warning mt-3">
+                ⚠️ Silakan isi kegiatan terlebih dahulu sebelum Check-Out.
+            </div>
+
+            <form action="{{ route('user.absensi.kegiatan', $absensiHariIni->id) }}" method="POST">
+                @csrf
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Kegiatan Hari Ini</label>
+                    <textarea name="kegiatan" class="form-control" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm">
+                    Simpan Kegiatan
+                </button>
+            </form>
+        @endif
+
+        {{-- KEGIATAN SUDAH DISIMPAN → CHECK-OUT MUNCUL --}}
+        @if($status['sudah_kegiatan'] && !$status['sudah_checkout'])
+            <div class="mt-3">
+                <strong>Kegiatan:</strong>
+                <p>{{ $absensiHariIni->kegiatan }}</p>
+            </div>
+
+            <form action="{{ route('user.absensi.keluar') }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-warning btn-sm">
+                    Check Out
+                </button>
+            </form>
+        @endif
+
+        {{-- SUDAH CHECK-OUT --}}
+        @if($status['sudah_checkout'])
+            <div class="alert alert-success mt-3">
+                ✅ Kamu sudah Check-Out hari ini
+            </div>
+
+            <p><strong>Kegiatan:</strong> {{ $absensiHariIni->kegiatan }}</p>
+            <p><strong>Keterangan:</strong> {{ ucfirst($absensiHariIni->keterangan ?? '-') }}</p>
+        @endif
     </div>
-    
-    {{-- Statistik Bulan Ini --}}
+
+    {{-- Rekap --}}
     <div class="card mt-4 shadow-sm p-4">
         <h5>Rekap Bulan Ini</h5>
         <hr>
@@ -61,31 +99,17 @@
     </div>
 </div>
 
-{{-- Script ambil koordinat lokasi --}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     if (navigator.geolocation) {
-
         navigator.geolocation.getCurrentPosition(function (position) {
-
-            // FORM CHECK-IN
             if (document.getElementById("latitude_in")) {
-                document.getElementById("latitude_in").value = position.coords.latitude;
-                document.getElementById("longitude_in").value = position.coords.longitude;
+                latitude_in.value = position.coords.latitude;
+                longitude_in.value = position.coords.longitude;
             }
-
-            // FORM CHECK-OUT
-            if (document.getElementById("latitude_out")) {
-                document.getElementById("latitude_out").value = position.coords.latitude;
-                document.getElementById("longitude_out").value = position.coords.longitude;
-            }
-
         }, function () {
-            alert("Gagal mengambil lokasi. Pastikan GPS aktif!");
+            alert("Gagal mengambil lokasi. Aktifkan GPS.");
         });
-
-    } else {
-        alert("Browser tidak mendukung geolocation.");
     }
 });
 </script>

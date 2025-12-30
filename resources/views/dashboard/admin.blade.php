@@ -82,6 +82,17 @@
                         <input type="time" name="jam_keluar" class="form-control">
                     </div>
 
+                    {{-- KEGIATAN --}}
+                    <div class="col-md-4">
+                        <label class="form-label">Kegiatan</label>
+                        <textarea
+                            name="kegiatan"
+                            class="form-control"
+                            rows="2"
+                            placeholder="Contoh: Mengajar, Rapat, Praktikum, Administrasi">
+                        </textarea>
+                    </div>
+
                     <div class="col-md-2">
                         <label class="form-label">Keterangan</label>
                         <select name="keterangan" class="form-select">
@@ -121,6 +132,7 @@
                             <th>Masuk</th>
                             <th>Keluar</th>
                             <th>Total</th>
+                            <th>Kegiatan</th>
                             <th>Keterangan</th>
                             <th>Aksi</th>
                         </tr>
@@ -128,6 +140,17 @@
 
                     <tbody class="text-center">
                         @forelse ($absensi as $i => $item)
+
+                        @php
+                            $totalJam = '-';
+                            if ($item->jam_masuk && $item->jam_keluar) {
+                                $totalJam = round(
+                                    (strtotime($item->jam_keluar) - strtotime($item->jam_masuk)) / 3600,
+                                    2
+                                ) . ' jam';
+                            }
+                        @endphp
+
                         <tr>
                             <td>{{ $i + 1 }}</td>
                             <td class="text-start">{{ $item->user->name }}</td>
@@ -136,16 +159,19 @@
                             <td>{{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}</td>
                             <td>{{ $item->jam_masuk ?? '-' }}</td>
                             <td>{{ $item->jam_keluar ?? '-' }}</td>
-                            <td>-</td>
+                            <td>{{ $totalJam }}</td>
+                            <td class="text-start text-wrap" style="max-width:200px">
+                                {{ $item->kegiatan ?? '-' }}
+                            </td>
                             <td>
-                                <form action="{{ route('admin.absensi.updateKeterangan', $item->id) }}" method="POST" class="d-flex gap-1">
+                                <form action="{{ route('admin.absensi.updateKeterangan', $item->id) }}" method="POST" class="d-flex gap-1 justify-content-center">
                                     @csrf
                                     @method('PUT')
                                     <select name="keterangan" class="form-select form-select-sm">
-                                        <option value="hadir" {{ $item->keterangan=='hadir'?'selected':'' }}>H</option>
-                                        <option value="izin" {{ $item->keterangan=='izin'?'selected':'' }}>I</option>
-                                        <option value="sakit" {{ $item->keterangan=='sakit'?'selected':'' }}>S</option>
-                                        <option value="alpa" {{ $item->keterangan=='alpa'?'selected':'' }}>A</option>
+                                        <option value="hadir" {{ $item->keterangan=='hadir'?'selected':'' }}>Hadir</option>
+                                        <option value="izin" {{ $item->keterangan=='izin'?'selected':'' }}>Izin</option>
+                                        <option value="sakit" {{ $item->keterangan=='sakit'?'selected':'' }}>Sakit</option>
+                                        <option value="alpa" {{ $item->keterangan=='alpa'?'selected':'' }}>Alpha</option>
                                     </select>
                                     <button class="btn btn-sm btn-primary">Ubah</button>
                                 </form>
@@ -166,9 +192,12 @@
                                 </div>
                             </td>
                         </tr>
+
                         @empty
                         <tr>
-                            <td colspan="10" class="text-muted">Belum ada data absensi</td>
+                            <td colspan="11" class="text-muted">
+                                Belum ada data absensi
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>

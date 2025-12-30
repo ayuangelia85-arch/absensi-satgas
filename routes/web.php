@@ -52,7 +52,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 });
 
 Route::middleware(['auth', 'role:user'])->group(function () {
-    // dashboard user
     Route::get('/dashboard/user', [UserAbsensiController::class, 'index'])->name('user.dashboard');
 
     // Halaman absensi user
@@ -61,11 +60,14 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     // Check-in
     Route::post('/absensi/masuk', [UserAbsensiController::class, 'store'])->name('user.absensi.masuk');
 
-    Route::get('/user/absensi/history', [UserAbsensiController::class, 'history'])->name('user.absensi.history');
+    // Simpan kegiatan
+    Route::post('/absensi/{id}/kegiatan', [UserAbsensiController::class, 'simpanKegiatan'])->name('user.absensi.kegiatan');
 
     // Check-out
     Route::post('/absensi/keluar', [UserAbsensiController::class, 'keluar'])->name('user.absensi.keluar');
 
+    // History
+    Route::get('/user/absensi/history', [UserAbsensiController::class, 'history'])->name('user.absensi.history');
+});
     
 
-});

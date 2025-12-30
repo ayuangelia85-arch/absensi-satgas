@@ -2,110 +2,169 @@
 
 @section('content')
 <style>
-    .profile-card {
-        max-width: 480px;
-        border-radius: 20px;
-        background: #ffffff;
-        border: 1px solid #f3f3f3;
+    body {
+        background: #f6f8fb;
     }
 
+    .profile-card {
+        max-width: 480px;
+        border-radius: 24px;
+        background: #ffffff;
+        border: none;
+        overflow: hidden;
+    }
+
+    /* HEADER */
     .profile-header {
-        background: linear-gradient(135deg, #ff9acb, #ff6fa7);
-        padding: 40px 20px 60px 20px;
-        border-radius: 20px 20px 0 0;
-        color: white;
+        background: linear-gradient(135deg, #ff8fb7, #ff5fa2);
+        padding: 45px 20px 70px;
         text-align: center;
+        color: #fff;
         position: relative;
     }
 
     .profile-avatar {
         position: absolute;
         left: 50%;
+        bottom: -55px;
         transform: translateX(-50%);
-        bottom: -45px;
-        width: 110px;
-        height: 110px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
         object-fit: cover;
-        border: 5px solid white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 5px solid #fff;
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(0,0,0,.15);
     }
 
-    .profile-table th {
-        width: 35%;
-        color: #555;
+    .profile-name {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 4px;
     }
 
+    .profile-role {
+        font-size: .85rem;
+        opacity: .9;
+    }
+
+    /* CONTENT */
+    .profile-content {
+        padding: 90px 28px 30px;
+    }
+
+    .info-item {
+        background: #f9fafc;
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin-bottom: 14px;
+    }
+
+    .info-label {
+        font-size: .75rem;
+        color: #888;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: #333;
+    }
+
+    /* BUTTON */
     .btn-pink {
-        background-color: #ff7db8;
-        border-color: #ff7db8;
-        color: white;
+        background: linear-gradient(135deg, #ff7db8, #ff4fa1);
+        border: none;
+        color: #fff;
+        font-weight: 600;
+        border-radius: 14px;
+        padding: 12px;
     }
 
     .btn-pink:hover {
-        background-color: #ff4fa1;
-        border-color: #ff4fa1;
-        color: white;
+        opacity: .9;
+        color: #fff;
     }
 
     .btn-grey {
-        background-color: #e9e9e9;
+        background: #eef0f4;
         color: #555;
         font-weight: 600;
+        border-radius: 14px;
+        padding: 12px;
+        border: none;
     }
 
     .btn-grey:hover {
-        background-color: #d5d5d5;
+        background: #e0e3ea;
         color: #333;
     }
 </style>
 
-<div class="container d-flex justify-content-center mt-4">
+<div class="container d-flex justify-content-center mt-4 mb-5">
 
-    <div class="card profile-card shadow">
+    <div class="card profile-card shadow-sm">
 
-        {{-- HEADER PINK --}}
+        {{-- HEADER --}}
         <div class="profile-header">
-            <h4 class="mb-1">{{ $user->name }}</h4>
+            <div class="profile-name">
+                {{ $user->name }}
+            </div>
+            <div class="profile-role">
+                {{ ucfirst($user->role) }}
+            </div>
 
-            <img src="{{ $user->photo ? asset('profile/' . $user->photo) : asset('profile/default.png') }}"
-                 class="profile-avatar">
+            <img
+                src="{{ $user->photo ? asset('profile/' . $user->photo) : asset('profile/default.png') }}"
+                class="profile-avatar"
+                alt="Foto Profil"
+            >
         </div>
 
-        <div class="p-4 mt-5">
-
+        {{-- CONTENT --}}
+        <div class="profile-content">
 
             @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
             @endif
 
-            {{-- DETAIL --}}
-            <table class="table profile-table">
-                <tr>
-                    <th>Nama</th>
-                    <td>{{ $user->name }}</td>
-                </tr>
-                <tr>
-                    <th>NIM / NIP</th>
-                    <td>{{ $user->nim_nip }}</td>
-                </tr>
-                <tr>
-                    <th>Email</th>
-                    <td>{{ $user->email }}</td>
-                </tr>
-                <tr>
-                    <th>Status</th>
-                    <td>{{ $user->status }}</td>
-                </tr>
-            </table>
+            <div class="info-item">
+                <div class="info-label">Nama Lengkap</div>
+                <div class="info-value">{{ $user->name }}</div>
+            </div>
 
-            {{-- TOMBOL EDIT PROFIL --}}
-            <a href="{{ route('profil.edit') }}" class="btn btn-pink w-100 py-2 mt-3">
+            <div class="info-item">
+                <div class="info-label">NIM / NIP</div>
+                <div class="info-value">{{ $user->nim_nip }}</div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ $user->email }}</div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">{{ ucfirst($user->status) }}</div>
+            </div>
+
+            <a
+                href="{{ route('profil.edit') }}"
+                class="btn btn-pink w-100 mt-4"
+            >
                 Edit Profil
             </a>
 
-            {{-- TOMBOL KEMBALI KE DASHBOARD --}}
-            <a href="{{ auth()->user()->role == 'admin' ? route('admin.dashboard') : route('user.dashboard') }}"class="btn btn-grey w-100 py-2 mt-3">
+            <a
+                href="{{ auth()->user()->role == 'admin'
+                        ? route('admin.dashboard')
+                        : route('user.dashboard') }}"
+                class="btn btn-grey w-100 mt-3"
+            >
                 Kembali ke Dashboard
             </a>
 

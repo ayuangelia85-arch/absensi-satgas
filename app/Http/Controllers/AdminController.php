@@ -32,10 +32,6 @@ class AdminController extends Controller
         return view('dashboard.admin', compact('absensi', 'users'));
     }
 
-
-
-    
-
     // Halaman absensi (kalau mau ditampilkan terpisah dari dashboard)
     public function absensi()
     {
@@ -80,7 +76,8 @@ class AdminController extends Controller
             'tanggal' => 'required|date',
             'jam_masuk' => 'nullable',
             'jam_keluar' => 'nullable',
-            'keterangan' => 'nullable|string'
+            'kegiatan'   => 'nullable|string|max:2000',
+            'keterangan' => 'nullable|in:hadir,izin,sakit,alpa'
         ]);
 
         Absensi::create([
@@ -88,6 +85,7 @@ class AdminController extends Controller
             'tanggal' => $request->tanggal,
             'jam_masuk' => $request->jam_masuk,
             'jam_keluar' => $request->jam_keluar,
+            'kegiatan'   => $request->kegiatan,
             'keterangan' => $request->keterangan,
         ]);
 
@@ -110,42 +108,53 @@ class AdminController extends Controller
     {
         $user = auth()->user();
 
+        // VALIDASI
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'    => 'required|string|max:255',
             'nim_nip' => 'required|string|max:100',
-            'email' => 'required|email',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'password' => 'nullable|min:5'
+            'email'   => 'required|email',
+
+            // FOTO MAKS 1 MB
+            'photo'   => 'nullable|image|mimes:jpg,jpeg,png|max:1024',
+
+            // PASSWORD OPSIONAL (MIN 5)
+            'password'=> 'nullable|string|min:5',
+        ], [
+            'photo.max'   => 'Ukuran foto maksimal 1 MB.',
+            'photo.image' => 'File yang diunggah harus berupa gambar.',
+            'photo.mimes' => 'Format foto harus JPG, JPEG, atau PNG.',
         ]);
 
-        // update basic
+        // UPDATE BASIC
         $user->name = $request->name;
         $user->nim_nip = $request->nim_nip;
         $user->email = $request->email;
 
-        // update password bila diisi
-        if ($request->password) {
+        // UPDATE PASSWORD (JIKA DIISI)
+        if ($request->filled('password')) {
             $user->password = bcrypt($request->password);
         }
 
-        // upload foto
+        // UPLOAD FOTO
         if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('profile'), $filename);
 
-            // hapus foto lama kalau ada
+            // HAPUS FOTO LAMA
             if ($user->photo && file_exists(public_path('profile/' . $user->photo))) {
                 unlink(public_path('profile/' . $user->photo));
             }
 
+            $file = $request->file('photo');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('profile'), $filename);
+
             $user->photo = $filename;
         }
 
-
         $user->save();
 
-        return redirect()->route('profil')->with('success', 'Profil berhasil diperbarui!');
+        return redirect()
+            ->route('profil')
+            ->with('success', 'Profil berhasil diperbarui!');
     }
 
 

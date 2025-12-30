@@ -1,92 +1,62 @@
 @extends('layouts.app')
 
-@section('title', 'History Absensi')
-
 @section('content')
-<div class="container my-4">
+<div class="container mt-5">
+    <h3>Riwayat Absensi</h3>
 
-    {{-- JUDUL --}}
-    <div class="mb-4">
-        <h4 class="fw-bold mb-1">History Absensi Saya</h4>
-        <div style="width: 60px; height: 4px; background: #ff8fa3; border-radius: 10px;"></div>
-    </div>
-
-    {{-- FILTER --}}
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body d-flex flex-wrap gap-2 align-items-center">
-
-            <form method="GET" action="{{ route('user.absensi.history') }}" class="d-flex gap-2">
-
-                <select name="bulan" class="form-select">
-                    @for ($i = 1; $i <= 12; $i++)
-                        <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
-                        </option>
-                    @endfor
-                </select>
-
-                <select name="tahun" class="form-select">
-                    @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                        <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>
-                            {{ $y }}
-                        </option>
-                    @endfor
-                </select>
-
-                <button class="btn text-white px-4"
-                        style="background-color:#ff8fa3;">
-                    Filter
-                </button>
-
-            </form>
-
+    <form method="GET" class="row g-2 mb-4">
+        <div class="col-md-3">
+            <select name="bulan" class="form-select">
+                @for($i=1; $i<=12; $i++)
+                    <option value="{{ $i }}" {{ $bulan==$i ? 'selected':'' }}>
+                        {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
+                    </option>
+                @endfor
+            </select>
         </div>
-    </div>
 
-    {{-- TABEL --}}
-    <div class="card shadow-sm border-0">
-        <div class="card-body table-responsive">
+        <div class="col-md-3">
+            <select name="tahun" class="form-select">
+                @for($y=now()->year; $y>=now()->year-3; $y--)
+                    <option value="{{ $y }}" {{ $tahun==$y ? 'selected':'' }}>{{ $y }}</option>
+                @endfor
+            </select>
+        </div>
 
-            <table class="table align-middle mb-0">
-                <thead style="background-color:#ffe4ea;">
-                    <tr class="text-center">
-                        <th style="width:60px;">No</th>
-                        <th>Tanggal</th>
-                        <th>Jam Masuk</th>
-                        <th>Jam Keluar</th>
-                        <th>Status</th>
+        <div class="col-md-2">
+            <button class="btn btn-primary">Filter</button>
+        </div>
+    </form>
+
+    <div class="card shadow-sm">
+        <table class="table table-bordered mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Masuk</th>
+                    <th>Keluar</th>
+                    <th>Kegiatan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($absensis as $a)
+                    <tr>
+                        <td>{{ \Carbon\Carbon::parse($a->tanggal)->format('d/m/Y') }}</td>
+                        <td>{{ $a->jam_masuk ?? '-' }}</td>
+                        <td>{{ $a->jam_keluar ?? '-' }}</td>
+                        <td>{{ $a->kegiatan ?? '-' }}</td>
                     </tr>
-                </thead>
-
-                <tbody>
-                    @forelse ($absensis as $i => $absen)
-                        <tr class="text-center table-hover">
-                            <td>{{ $i + 1 }}</td>
-                            <td>
-                                {{ \Carbon\Carbon::parse($absen->tanggal)->translatedFormat('d F Y') }}
-                            </td>
-                            <td>{{ $absen->jam_masuk ?? '-' }}</td>
-                            <td>{{ $absen->jam_keluar ?? 'Belum Check-Out' }}</td>
-                            <td>
-                                <span class="badge px-3 py-2"
-                                      style="background-color:#ff8fa3;">
-                                    {{ ucfirst($absen->keterangan) }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                Belum ada data absensi
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-
-            </table>
-
-        </div>
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Tidak ada data absensi</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 
+    <div class="mt-3">
+        <strong>Total Jam:</strong> {{ round($totalJam,1) }} jam
+    </div>
 </div>
 @endsection
