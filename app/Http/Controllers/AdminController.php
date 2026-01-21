@@ -81,10 +81,6 @@ class AdminController extends Controller
             $jamKeluar = Carbon::createFromFormat('h:i A', $request->jam_keluar)
                                 ->format('H:i');
 
-            if ($jamKeluar > '16:00') {
-                return back()->with('error', 'Jam keluar maksimal pukul 04:00 PM.');
-            }
-
             if ($jamMasuk && $jamKeluar < $jamMasuk) {
                 return back()->with('error', 'Jam keluar tidak boleh lebih awal dari jam masuk.');
             }
