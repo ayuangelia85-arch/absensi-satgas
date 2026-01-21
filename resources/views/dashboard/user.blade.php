@@ -82,10 +82,6 @@
 
         {{-- SUDAH CHECK-OUT --}}
         @if($status['sudah_checkout'])
-            <div class="alert alert-success mt-3">
-                ✅ Kamu sudah Check-Out hari ini
-            </div>
-
             <p><strong>Kegiatan:</strong> {{ $absensiHariIni->kegiatan }}</p>
             <p><strong>Keterangan:</strong> {{ ucfirst($absensiHariIni->keterangan ?? '-') }}</p>
         @endif

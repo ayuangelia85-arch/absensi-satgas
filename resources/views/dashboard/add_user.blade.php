@@ -39,10 +39,16 @@
             <input type="email" name="email" class="form-control" required>
         </div>
 
-        <div class="mb-3">
-            <label for="status" class="form-label">Status</label>
-            <input type="text" name="status" class="form-control" required>
-        </div>
+         <div class="mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" class="form-select" required>
+                    <option value="">-- Pilih Status --</option>
+                    <option value="mahasiswa" {{ old('status') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
+                    <option value="dosen" {{ old('status') == 'dosen' ? 'selected' : '' }}>Dosen</option>
+                    <option value="magang" {{ old('status') == 'magang' ? 'selected' : '' }}>Magang</option>
+                    <option value="staff" {{ old('status') == 'staff' ? 'selected' : '' }}>Staff</option>
+                </select>
+            </div>
 
         <div class="mb-3">
             <label for="role" class="form-label">Role</label>

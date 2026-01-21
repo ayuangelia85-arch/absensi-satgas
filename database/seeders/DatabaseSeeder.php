@@ -10,27 +10,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin
-        User::create([
-            'nim_nip' => '1234567899',
-            'name' => 'Admin SWYC',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-        ]);
-
-        // User
-        User::create([
-            'nim_nip' => '2312500248',
-            'name' => 'Nadine',
-            'password' => Hash::make('user123'),
-            'role' => 'user',
-        ]);
-
-        User::create([
-            'nim_nip' => '2312501170',
-            'name' => 'Dyah',
-            'password' => Hash::make('user456'),
-            'role' => 'user',
-        ]);
+       //
     }
 }

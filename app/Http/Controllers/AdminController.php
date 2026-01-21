@@ -9,88 +9,166 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\UserCreatedMail;
+use Carbon\Carbon;
 
 
 class AdminController extends Controller
 {
-    // Dashboard admin: tampilkan semua data absensi (paginate biar ringan)
+
     public function index(Request $request)
     {
-        $query = Absensi::with('user');
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date',
+            'per_page'   => 'nullable|integer|in:25,50,100'
+        ]);
 
-        if ($request->start_date) {
-            $query->whereDate('tanggal', '>=', $request->start_date);
-        }
+        $perPage = $request->get('per_page', 25);
+        
+        $query = Absensi::with('user:id,name');
 
-        if ($request->end_date) {
-            $query->whereDate('tanggal', '<=', $request->end_date);
-        }
+        $query->when($request->start_date, function ($q) use ($request) {
+            return $q->whereDate('tanggal', '>=', $request->start_date);
+        });
 
-        $absensi = $query->orderBy('tanggal', 'desc')->get();
-        $users = User::all(); // <-- WAJIB supaya dropdown di form tersedia
+        $query->when($request->end_date, function ($q) use ($request) {
+            return $q->whereDate('tanggal', '<=', $request->end_date);
+        });
+
+        $absensi = $query->latest('tanggal')
+                        ->paginate($perPage)
+                        ->withQueryString();
+
+        $users = User::select('id', 'name')->orderBy('name')->get();
 
         return view('dashboard.admin', compact('absensi', 'users'));
     }
 
-    // Halaman absensi (kalau mau ditampilkan terpisah dari dashboard)
-    public function absensi()
+    public function absensi(Request $request)
     {
-        $absensi = Absensi::with('user')->orderBy('tanggal', 'desc')->get();
+        $perPage = $request->get('per_page', 25);
+
+        $absensi = Absensi::with('user')
+                    ->orderBy('tanggal', 'desc')
+                    ->paginate($perPage)
+                    ->withQueryString();
+
         return view('absensi.index', compact('absensi'));
     }
 
-    // 🔹 Update keterangan absensi (izin, sakit, alpa, dll)
-    public function updateKeterangan(Request $request, $id)
+   public function updateAbsensi(Request $request, $id)
     {
         $request->validate([
-            'keterangan' => 'nullable|string|max:50',
+            'jam_masuk'  => 'nullable|date_format:h:i A',
+            'jam_keluar' => 'nullable|date_format:h:i A',
         ]);
 
         $absensi = Absensi::findOrFail($id);
-        $absensi->update([
-            'keterangan' => $request->keterangan,
-        ]);
 
-        return redirect()->back()->with('success', 'Keterangan absensi berhasil diperbarui!');
+        if ($absensi->keterangan !== 'hadir') {
+            return back()->with('error', 'Data izin/sakit/alpa tidak memiliki jam masuk dan keluar.');
+        }
+
+        $jamMasuk = $absensi->jam_masuk;
+        if ($request->filled('jam_masuk')) {
+            $jamMasuk = Carbon::createFromFormat('h:i A', $request->jam_masuk)
+                                ->format('H:i');
+        }
+
+        $jamKeluar = $absensi->jam_keluar;
+        if ($request->filled('jam_keluar')) {
+
+            $jamKeluar = Carbon::createFromFormat('h:i A', $request->jam_keluar)
+                                ->format('H:i');
+
+            if ($jamKeluar > '16:00') {
+                return back()->with('error', 'Jam keluar maksimal pukul 04:00 PM.');
+            }
+
+            if ($jamMasuk && $jamKeluar < $jamMasuk) {
+                return back()->with('error', 'Jam keluar tidak boleh lebih awal dari jam masuk.');
+            }
+        }
+
+        $absensi->jam_masuk  = $jamMasuk;
+        $absensi->jam_keluar = $jamKeluar;
+
+        if ($jamMasuk && $jamKeluar) {
+            $awal  = Carbon::createFromFormat('H:i', $jamMasuk);
+            $akhir = Carbon::createFromFormat('H:i', $jamKeluar);
+
+            $menit = $awal->diffInMinutes($akhir);
+            $jam   = floor($menit / 60);
+            $sisa  = $menit % 60;
+
+            $absensi->durasi_jam = "{$jam} Jam {$sisa} Menit";
+        }
+
+        $absensi->save();
+
+        return back()->with('success', 'Data absensi berhasil diperbarui oleh admin.');
     }
+    
 
-    // 🔹 Hapus data absensi (opsional)
-    public function delete($id)
+     public function indexUser()
+
     {
-        $absensi = Absensi::findOrFail($id);
-        $absensi->delete();
 
-        return redirect()->back()->with('success', 'Data absensi berhasil dihapus!');
-    }
-
-       public function indexUser()
-    {
         $users = User::all();
-        return view('dashboard.user_list', compact('users'));
-    }
 
-    public function storeManual(Request $request)
+        return view('dashboard.user_list', compact('users'));
+
+    }
+  public function storeManual(Request $request)
     {
         $request->validate([
-            'user_id' => 'required',
-            'tanggal' => 'required|date',
-            'jam_masuk' => 'nullable',
-            'jam_keluar' => 'nullable',
+            'user_id'    => 'required|exists:users,id',
+            'tanggal'    => 'required|date',
+            'jam_masuk'  => 'nullable|date_format:H:i',
+            'jam_keluar' => 'nullable|date_format:H:i',
             'kegiatan'   => 'nullable|string|max:2000',
-            'keterangan' => 'nullable|in:hadir,izin,sakit,alpa'
+            'keterangan' => 'required|in:hadir,izin,sakit,alpa'
         ]);
+
+        $exists = Absensi::where('user_id', $request->user_id)
+                        ->whereDate('tanggal', $request->tanggal)
+                        ->exists();
+
+        if ($exists) {
+            return redirect()->back()->with('error', 'User tersebut sudah memiliki data absensi pada tanggal ini.');
+        }
+
+        $jamMasuk = null;
+        $jamKeluar = null;
+        $durasi = null;
+
+        if ($request->keterangan === 'hadir') {
+            $jamMasuk = $request->jam_masuk;
+            $jamKeluar = $request->jam_keluar;
+
+            if ($jamMasuk && $jamKeluar) {
+                $awal  = strtotime($jamMasuk);
+                $akhir = strtotime($jamKeluar);
+                $diff  = $akhir - $awal;
+                $jam   = floor($diff / 3600);
+                $menit = floor(($diff % 3600) / 60);
+                $durasi = "$jam Jam $menit Menit";
+            }
+        }
 
         Absensi::create([
-            'user_id' => $request->user_id,
-            'tanggal' => $request->tanggal,
-            'jam_masuk' => $request->jam_masuk,
-            'jam_keluar' => $request->jam_keluar,
+            'user_id'    => $request->user_id,
+            'tanggal'    => $request->tanggal,
+            'jam_masuk'  => $jamMasuk,
+            'jam_keluar' => $jamKeluar,
+            'durasi_jam' => $durasi,
             'kegiatan'   => $request->kegiatan,
             'keterangan' => $request->keterangan,
         ]);
 
         return redirect()->back()->with('success', 'Absensi manual berhasil ditambahkan!');
     }
+
 
         public function profil()
     {
@@ -108,37 +186,27 @@ class AdminController extends Controller
     {
         $user = auth()->user();
 
-        // VALIDASI
         $request->validate([
-            'name'    => 'required|string|max:255',
-            'nim_nip' => 'required|string|max:100',
+            'name'    => 'required|string|max:50',
             'email'   => 'required|email',
-
-            // FOTO MAKS 1 MB
             'photo'   => 'nullable|image|mimes:jpg,jpeg,png|max:1024',
-
-            // PASSWORD OPSIONAL (MIN 5)
-            'password'=> 'nullable|string|min:5',
+            'password'=> ['nullable','string','min:7','max:10',
+            Password::min(7)->mixedCase()->numbers()->symbols(),
+            ],
         ], [
             'photo.max'   => 'Ukuran foto maksimal 1 MB.',
             'photo.image' => 'File yang diunggah harus berupa gambar.',
             'photo.mimes' => 'Format foto harus JPG, JPEG, atau PNG.',
         ]);
 
-        // UPDATE BASIC
         $user->name = $request->name;
-        $user->nim_nip = $request->nim_nip;
         $user->email = $request->email;
 
-        // UPDATE PASSWORD (JIKA DIISI)
         if ($request->filled('password')) {
-            $user->password = bcrypt($request->password);
+            $user->password = Hash::make($request->password);
         }
-
-        // UPLOAD FOTO
         if ($request->hasFile('photo')) {
 
-            // HAPUS FOTO LAMA
             if ($user->photo && file_exists(public_path('profile/' . $user->photo))) {
                 unlink(public_path('profile/' . $user->photo));
             }
@@ -157,44 +225,43 @@ class AdminController extends Controller
             ->with('success', 'Profil berhasil diperbarui!');
     }
 
-
-    // Tambah user baru
-
         public function create()
     {
         return view('dashboard.add_user');
     }
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
-            'nim_nip' => 'required|string|max:10|unique:users',
-            'email' => 'required|email|unique:users',
-            'status' => 'required',
-            'role' => 'required',
-            'password' => ['required','string','min:7','max:10',
-            Password::min(7)->mixedCase()->symbols(),],
+            'name'    => 'required|string|max:50',
+            'nim_nip' => 'required|string|max:20|unique:users,nim_nip',
+            'email'   => 'required|email|unique:users,email',
+            'status'  => 'required', 
+            'role'    => 'required|in:admin,user',
+            'password' => ['required','string','max:100',
+            Password::min(7)->mixedCase()->numbers()->symbols(),
+            ],
         ]);
 
-        $plainPassword = $request->password;
+        return \DB::transaction(function () use ($request) {
+            $plainPassword = $request->password;
 
-        $user = User::create([
-            'name' => $request->name,
-            'nim_nip' => $request->nim_nip,
-            'email' => $request->email,
-            'status' => $request->status,
-            'role' => $request->role,
-            'password' => Hash::make($plainPassword),
-        ]);
+            $user = User::create([
+                'name'    => $request->name,
+                'nim_nip' => $request->nim_nip,
+                'email'   => $request->email,
+                'status'  => $request->status,
+                'role'    => $request->role,
+                'password' => Hash::make($plainPassword),
+            ]);
 
-        // kirim email ke user
-        Mail::to($user->email)->send(
-            new UserCreatedMail($user, $plainPassword)
-        );
+            Mail::to($user->email)->send(
+                new UserCreatedMail($user, $plainPassword)
+            );
 
-        return redirect()
-            ->route('admin.user.index')
-            ->with('success', 'User baru berhasil ditambahkan & email terkirim!');
+            return redirect()
+                ->route('admin.user.index')
+                ->with('success', 'User baru berhasil ditambahkan & kredensial terkirim ke email!');
+        });
     }
 
         public function edit($id)
@@ -206,17 +273,31 @@ class AdminController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'nim_nip' => 'required|string|max:50',
-            'email' => 'required|email',
-            'status' => 'required|string',
-            'role' => 'required|string',
+            'name'    => 'required|string|max:50',
+            'nim_nip' => 'required|string|max:20|unique:users,nim_nip,' . $id,
+            'email'   => 'required|email|unique:users,email,' . $id,
+            'status'  => 'required',
+            'role'    => 'required|in:admin,user',
+            'password' => 'nullable|string|min:7|max:100', 
         ]);
 
         $user = User::findOrFail($id);
-        $user->update($request->all());
 
-        return redirect()->route('admin.user.index')->with('success', 'Data user berhasil diperbarui!');
+        $user->name    = $request->name;
+        $user->nim_nip = $request->nim_nip;
+        $user->email   = $request->email;
+        $user->status  = $request->status;
+        $user->role    = $request->role;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return redirect()
+            ->route('admin.user.index')
+            ->with('success', 'Data user berhasil diperbarui!');
     }
 
     public function destroyUser($id)

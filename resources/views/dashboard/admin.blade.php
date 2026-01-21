@@ -82,15 +82,10 @@
                         <input type="time" name="jam_keluar" class="form-control">
                     </div>
 
-                    {{-- KEGIATAN --}}
                     <div class="col-md-4">
                         <label class="form-label">Kegiatan</label>
-                        <textarea
-                            name="kegiatan"
-                            class="form-control"
-                            rows="2"
-                            placeholder="Contoh: Mengajar, Rapat, Praktikum, Administrasi">
-                        </textarea>
+                        <textarea name="kegiatan" class="form-control" rows="2"
+                                  placeholder="Contoh: Mengajar, Rapat, Praktikum"></textarea>
                     </div>
 
                     <div class="col-md-2">
@@ -115,7 +110,32 @@
         </div>
     </div>
 
-    {{-- TABEL DATA ABSENSI --}}
+    {{-- HEADER DATA + PER PAGE --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <strong>Data Absensi</strong>
+
+        <form method="GET" action="{{ route('admin.dashboard') }}"
+              class="d-flex align-items-center gap-2">
+
+            {{-- JAGA FILTER --}}
+            <input type="hidden" name="start_date" value="{{ request('start_date') }}">
+            <input type="hidden" name="end_date" value="{{ request('end_date') }}">
+
+            <label class="mb-0">Tampilkan</label>
+
+            <select name="per_page"
+                    class="form-select form-select-sm w-auto"
+                    onchange="this.form.submit()">
+                <option value="25" {{ request('per_page',25) == 25 ? 'selected' : '' }}>25</option>
+                <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+            </select>
+
+            <span>data</span>
+        </form>
+    </div>
+
+    {{-- TABEL DATA --}}
     <div class="card shadow-sm border-0">
         <div class="card-body">
             <h6 class="fw-semibold mb-3">Data Absensi Pegawai / Mahasiswa</h6>
@@ -126,8 +146,6 @@
                         <tr>
                             <th>No</th>
                             <th>Nama</th>
-                            <th>NIM/NIP</th>
-                            <th>Email</th>
                             <th>Tanggal</th>
                             <th>Masuk</th>
                             <th>Keluar</th>
@@ -144,64 +162,85 @@
                         @php
                             $totalJam = '-';
                             if ($item->jam_masuk && $item->jam_keluar) {
-                                $totalJam = round(
-                                    (strtotime($item->jam_keluar) - strtotime($item->jam_masuk)) / 3600,
-                                    2
-                                ) . ' jam';
+                                $selisih = strtotime($item->jam_keluar) - strtotime($item->jam_masuk);
+                                if ($selisih > 0) {
+                                    $totalJam = round($selisih / 3600, 2) . ' jam';
+                                }
                             }
                         @endphp
 
                         <tr>
-                            <td>{{ $i + 1 }}</td>
+                            <td>{{ $absensi->firstItem() + $i }}</td>
                             <td class="text-start">{{ $item->user->name }}</td>
-                            <td>{{ $item->user->nim_nip }}</td>
-                            <td class="text-start">{{ $item->user->email }}</td>
                             <td>{{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}</td>
-                            <td>{{ $item->jam_masuk ?? '-' }}</td>
-                            <td>{{ $item->jam_keluar ?? '-' }}</td>
+                           <td>
+                                @if ($item->keterangan === 'hadir')
+                                    {{ $item->jam_masuk ?? '-' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td>
+                                @if ($item->keterangan === 'hadir')
+                                    @if ($item->jam_keluar)
+                                        {{ $item->jam_keluar }}
+                                    @php
+                                        try {
+                                            if (str_contains($item->jam_keluar, 'AM') || str_contains($item->jam_keluar, 'PM')) {
+                                                $jamKeluar = \Carbon\Carbon::createFromFormat('h:i A', $item->jam_keluar);
+                                            } else {
+                                                $jamKeluar = \Carbon\Carbon::createFromFormat('H:i', $item->jam_keluar);
+                                            }
+                                        } catch (\Exception $e) {
+                                            $jamKeluar = null;
+                                        }
+                                    @endphp
+
+                                        {{ $jamKeluar ? $jamKeluar->format('h:i A') : '-' }}
+                                    @else
+                                        <span class="badge bg-warning text-dark">Belum Checkout</span>
+                                    @endif
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+
                             <td>{{ $totalJam }}</td>
                             <td class="text-start text-wrap" style="max-width:200px">
                                 {{ $item->kegiatan ?? '-' }}
                             </td>
+                            <td>{{ ucfirst($item->keterangan ?? 'hadir') }}</td>
+
                             <td>
-                                <form action="{{ route('admin.absensi.updateKeterangan', $item->id) }}" method="POST" class="d-flex gap-1 justify-content-center">
-                                    @csrf
-                                    @method('PUT')
-                                    <select name="keterangan" class="form-select form-select-sm">
-                                        <option value="hadir" {{ $item->keterangan=='hadir'?'selected':'' }}>Hadir</option>
-                                        <option value="izin" {{ $item->keterangan=='izin'?'selected':'' }}>Izin</option>
-                                        <option value="sakit" {{ $item->keterangan=='sakit'?'selected':'' }}>Sakit</option>
-                                        <option value="alpa" {{ $item->keterangan=='alpa'?'selected':'' }}>Alpha</option>
-                                    </select>
-                                    <button class="btn btn-sm btn-primary">Ubah</button>
-                                </form>
-                            </td>
-                            <td>
-                                <div class="d-grid gap-1">
-                                    <a href="{{ route('absensi.location', $item->id) }}" class="btn btn-sm btn-success">
+                                @if ($item->latitude && $item->longitude)
+                                    <a href="{{ route('absensi.location', $item->id) }}"
+                                    class="btn btn-sm btn-success">
                                         Lokasi
                                     </a>
-                                    <form action="{{ route('admin.absensi.delete', $item->id) }}" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-sm btn-danger w-100"
-                                            onclick="return confirm('Hapus data ini?')">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
+                                @elseif (in_array($item->keterangan, ['izin','sakit','alpa']))
+                                    -
+                                @else
+                                    <span class="badge bg-secondary">Input Admin</span>
+                                @endif
                             </td>
                         </tr>
 
                         @empty
                         <tr>
-                            <td colspan="11" class="text-muted">
+                            <td colspan="11" class="text-muted text-center">
                                 Belum ada data absensi
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- PAGINATION --}}
+            <div class="mt-3 d-flex justify-content-end">
+                {{ $absensi->links() }}
             </div>
 
         </div>

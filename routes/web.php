@@ -32,7 +32,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::post('/absensi/manual', [AdminController::class, 'storeManual'])->name('admin.absensi.storeManual');
-    Route::put('/admin/absensi/{id}/update', [AdminController::class, 'updateKeterangan'])->name('admin.absensi.updateKeterangan');
+    Route::put('/admin/absensi/{id}/update', [AdminController::class, 'updateAbsensi'])->name('admin.absensi.updateAbsensi');
     Route::delete('/admin/absensi/{id}/delete', [AdminController::class, 'delete'])->name('admin.absensi.delete');
     Route::get('/admin/absensi/{id}/location', [UserAbsensiController::class, 'showLocation'])->name('absensi.location');
 
@@ -40,7 +40,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/user/store', [AdminController::class, 'store'])->name('admin.user.store');
     Route::get('/user/list', [AdminController::class, 'indexUser'])->name('admin.user.index');
     Route::get('/user/{id}/edit', [AdminController::class, 'edit'])->name('admin.user.edit');
-    Route::put('/user/{id}', [UserAbsensiController::class, 'update'])->name('admin.user.update');
+    Route::put('/user/{id}', [AdminController::class, 'update'])->name('admin.user.update');
     Route::delete('/user/{id}', [AdminController::class, 'destroyUser'])->name('admin.user.destroy');
    
     // ✅ Route resource laporan juga otomatis mencakup CRUD
@@ -55,7 +55,7 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/dashboard/user', [UserAbsensiController::class, 'index'])->name('user.dashboard');
 
     // Halaman absensi user
-    Route::get('/absensi', [UserAbsensiController::class, 'index'])->name('user.absensi');
+    Route::get('/absensi', function () {return redirect()->route('user.dashboard');})->name('user.absensi');
 
     // Check-in
     Route::post('/absensi/masuk', [UserAbsensiController::class, 'store'])->name('user.absensi.masuk');

@@ -27,7 +27,7 @@
         }
 
         h2 {
-            color: #b400c8;
+            color: #e0468a;
             margin-bottom: 5px;
         }
 
@@ -41,14 +41,14 @@
             width: 90%;
             padding: 12px;
             border-radius: 10px;
-            border: 1px solid #d8aee7;
+            border: 1px solid #f5b4d0ff;
             outline: none;
             margin-bottom: 10px;
             background: #fff7ff;
         }
 
         button {
-            background: #d46aff;
+            background: #f374abff;
             color: white;
             border: none;
             padding: 12px 0;
@@ -61,7 +61,7 @@
         }
 
         button:hover {
-            background: #b746e0;
+            background: #eb7aabff;
         }
 
         .success {

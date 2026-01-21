@@ -90,24 +90,27 @@
                     type="text"
                     name="name"
                     class="form-control rounded-3"
-                    value="{{ auth()->user()->name }}"
+                    value="{{ $user->name }}"
                     required
                 >
             </div>
 
-            {{-- NIM / NIP --}}
             <div class="mb-3">
                 <label class="label-pink">
                     NIM / NIP
                 </label>
                 <input
                     type="text"
-                    name="nim_nip"
                     class="form-control rounded-3"
-                    value="{{ auth()->user()->nim_nip }}"
-                    required
+                    value="{{ $user->nim_nip }}"
+                    readonly
                 >
+                <small class="text-muted">
+                    NIM / NIP tidak dapat diubah.
+                </small>
             </div>
+
+
 
             {{-- EMAIL --}}
             <div class="mb-3">
@@ -118,7 +121,7 @@
                     type="email"
                     name="email"
                     class="form-control rounded-3"
-                    value="{{ auth()->user()->email }}"
+                    value="{{ $user->email }}"
                     required
                 >
             </div>
@@ -151,13 +154,13 @@
                     name="password"
                     class="form-control rounded-3"
                     maxlength="10"
-                    pattern="^(?=.*[A-Z])(?=.*[\W_]).{1,10}$"
-                    title="Password maksimal 10 karakter, mengandung minimal 1 huruf besar dan 1 karakter unik"
-                >
+                    pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{7,10}$"
+                    title="7–10 karakter, 1 huruf besar, angka, 1 karakter unik"
+                    >
 
                 <small class="text-muted d-block mt-1">
                     🔒 Maksimal <strong>10 karakter</strong>,
-                    harus mengandung <strong>1 huruf besar</strong>
+                    harus mengandung <strong>1 huruf besar</strong>,<strong> angka </strong>
                     dan <strong>1 karakter unik</strong>
                     (contoh: ! @ # $ %).
                 </small>

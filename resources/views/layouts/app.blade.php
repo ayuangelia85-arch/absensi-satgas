@@ -119,17 +119,10 @@
 
                 @if(Auth::user()->role === 'admin')
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.user.index') }}">Daftar User</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('laporan.index') }}">Laporan</a>
-                    </li>
-                @else
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('user.absensi') }}">Absensi</a>
                     </li>
                 @endif
 

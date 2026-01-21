@@ -67,9 +67,9 @@ class UserAbsensiController extends Controller
             'longitude' => 'required',
         ]);
 
-        $campusLat = -6.234943;
-        $campusLng = 106.747206;
-        $radius = 800;
+        $campusLat = -6.235101;
+        $campusLng = 106.747122;
+        $radius = 1000;
 
         $distance = $this->distance($request->latitude, $request->longitude, $campusLat, $campusLng);
         if ($distance > $radius) {
@@ -135,7 +135,7 @@ class UserAbsensiController extends Controller
 
         $absensi->update(['jam_keluar' => now('Asia/Jakarta')->toTimeString()]);
 
-        return redirect()->route('user.absensi')->with('success', 'Berhasil Check-Out!');
+        return redirect()->route('user.absensi')->with('success', 'Anda Berhasil Check-Out!');
     }
 
     public function history(Request $request)

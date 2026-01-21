@@ -17,8 +17,8 @@ return new class extends Migration
             $table->time('jam_keluar')->nullable();
             $table->decimal('durasi_jam', 5, 2)->nullable();
             $table->enum('keterangan', ['hadir', 'izin', 'sakit', 'alpa'])->default('hadir');
-            $table->string('latitude')->nullable();
-            $table->string('longitude')->nullable();
+            $table->decimal('latitude', 10,8)->nullable();
+            $table->decimal('longitude', 11,8)->nullable();
             $table->timestamps();
         });
     }

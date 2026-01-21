@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<h2 style="text-align:center">Rekap Absensi Bulanan</h2>
+<h2 style="text-align:center">Rekap Presensi Bulanan</h2>
 
 @php
     use Carbon\Carbon;
