@@ -58,51 +58,52 @@ class AdminController extends Controller
 
    public function updateAbsensi(Request $request, $id)
     {
-        $request->validate([
-            'jam_masuk'  => 'nullable|date_format:h:i A',
-            'jam_keluar' => 'nullable|date_format:h:i A',
-        ]);
-
         $absensi = Absensi::findOrFail($id);
 
         if ($absensi->keterangan !== 'hadir') {
             return back()->with('error', 'Data izin/sakit/alpa tidak memiliki jam masuk dan keluar.');
         }
 
-        $jamMasuk = $absensi->jam_masuk;
-        if ($request->filled('jam_masuk')) {
-            $jamMasuk = Carbon::createFromFormat('h:i A', $request->jam_masuk)
-                                ->format('H:i');
+        try {
+            $jamMasuk = $request->filled('jam_masuk')
+                ? Carbon::parse($request->jam_masuk)
+                : ($absensi->jam_masuk ? Carbon::parse($absensi->jam_masuk) : null);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Format jam masuk tidak valid.');
         }
 
-        $jamKeluar = $absensi->jam_keluar;
-        if ($request->filled('jam_keluar')) {
-
-            $jamKeluar = Carbon::createFromFormat('h:i A', $request->jam_keluar)
-                                ->format('H:i');
-
-            if ($jamMasuk && $jamKeluar < $jamMasuk) {
-                return back()->with('error', 'Jam keluar tidak boleh lebih awal dari jam masuk.');
-            }
+        try {
+            $jamKeluar = $request->filled('jam_keluar')
+                ? Carbon::parse($request->jam_keluar)
+                : ($absensi->jam_keluar ? Carbon::parse($absensi->jam_keluar) : null);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Format jam keluar tidak valid.');
         }
-
-        $absensi->jam_masuk  = $jamMasuk;
-        $absensi->jam_keluar = $jamKeluar;
 
         if ($jamMasuk && $jamKeluar) {
-            $awal  = Carbon::createFromFormat('H:i', $jamMasuk);
-            $akhir = Carbon::createFromFormat('H:i', $jamKeluar);
+            if ($jamKeluar->lessThan($jamMasuk)) {
+                return back()->with('error', 'Jam keluar tidak boleh lebih awal dari jam masuk.');
+            }
+            $diffInSeconds = $jamKeluar->diffInSeconds($jamMasuk);
 
-            $menit = $awal->diffInMinutes($akhir);
-            $jam   = floor($menit / 60);
-            $sisa  = $menit % 60;
+            $hours   = floor($diffInSeconds / 3600);
+            $minutes = floor(($diffInSeconds % 3600) / 60);
+            $seconds = $diffInSeconds % 60;
 
-            $absensi->durasi_jam = "{$jam} Jam {$sisa} Menit";
+            $hours   = max(0, $hours);
+            $minutes = max(0, $minutes);
+            $seconds = max(0, $seconds);
+
+            $absensi->durasi_jam = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
         }
+
+
+        if ($jamMasuk)  $absensi->jam_masuk  = $jamMasuk->format('H:i:s');
+        if ($jamKeluar) $absensi->jam_keluar = $jamKeluar->format('H:i:s');
 
         $absensi->save();
 
-        return back()->with('success', 'Data absensi berhasil diperbarui oleh admin.');
+        return back()->with('success', 'Data absensi berhasil diperbarui.');
     }
     
 

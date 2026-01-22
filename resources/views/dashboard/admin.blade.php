@@ -85,7 +85,7 @@
                     <div class="col-md-4">
                         <label class="form-label">Kegiatan</label>
                         <textarea name="kegiatan" class="form-control" rows="2"
-                                  placeholder="Contoh: Mengajar, Rapat, Praktikum"></textarea>
+                                  placeholder="Contoh: Pengaduan, Sosialisasi.."></textarea>
                     </div>
 
                     <div class="col-md-2">
@@ -173,40 +173,46 @@
                             <td>{{ $absensi->firstItem() + $i }}</td>
                             <td class="text-start">{{ $item->user->name }}</td>
                             <td>{{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}</td>
-                           <td>
-                                @if ($item->keterangan === 'hadir')
-                                    {{ $item->jam_masuk ?? '-' }}
+                            <td>
+                                @if($item->jam_masuk)
+                                    {{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i A') }}
                                 @else
                                     -
                                 @endif
                             </td>
-
                             <td>
                                 @if ($item->keterangan === 'hadir')
                                     @if ($item->jam_keluar)
-                                        {{ $item->jam_keluar }}
-                                    @php
-                                        try {
-                                            if (str_contains($item->jam_keluar, 'AM') || str_contains($item->jam_keluar, 'PM')) {
-                                                $jamKeluar = \Carbon\Carbon::createFromFormat('h:i A', $item->jam_keluar);
-                                            } else {
-                                                $jamKeluar = \Carbon\Carbon::createFromFormat('H:i', $item->jam_keluar);
+                                        @php
+                                            try {
+                                                $jamKeluar = \Carbon\Carbon::parse($item->jam_keluar)->format('h:i A');
+                                            } catch (\Exception $e) {
+                                                $jamKeluar = '-';
                                             }
-                                        } catch (\Exception $e) {
-                                            $jamKeluar = null;
-                                        }
-                                    @endphp
+                                        @endphp
 
-                                        {{ $jamKeluar ? $jamKeluar->format('h:i A') : '-' }}
+                                        <div>{{ $jamKeluar }}</div>
                                     @else
                                         <span class="badge bg-warning text-dark">Belum Checkout</span>
+
+                                        <form action="{{ route('admin.absensi.updateAbsensi', $item->id) }}"
+                                            method="POST"
+                                            class="d-flex gap-1 justify-content-center mt-1">
+                                            @csrf
+                                            @method('PUT')
+
+                                            <input type="time"
+                                                name="jam_keluar"
+                                                class="form-control form-control-sm"
+                                                required>
+
+                                            <button class="btn btn-sm btn-warning">Simpan</button>
+                                        </form>
                                     @endif
                                 @else
                                     -
                                 @endif
                             </td>
-
-
                             <td>{{ $totalJam }}</td>
                             <td class="text-start text-wrap" style="max-width:200px">
                                 {{ $item->kegiatan ?? '-' }}
