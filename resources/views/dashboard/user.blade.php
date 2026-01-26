@@ -42,7 +42,7 @@
 
         {{-- SUDAH CHECK-IN --}}
         @if($status['sudah_checkin'])
-            <p><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($absensiHariIni->tanggal)->translatedFormat('d F Y') }}</p>
+            <p><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($absensiHariIni->tanggal)->translatedFormat('d M Y') }}</p>
             <p><strong>Jam Masuk:</strong> {{ $absensiHariIni->jam_masuk }}</p>
             <p><strong>Jam Keluar:</strong> {{ $absensiHariIni->jam_keluar ?? '-' }}</p>
         @endif

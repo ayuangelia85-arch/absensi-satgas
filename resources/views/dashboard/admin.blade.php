@@ -175,7 +175,7 @@
                             <td>{{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}</td>
                             <td>
                                 @if($item->jam_masuk)
-                                    {{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i A') }}
+                                    {{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i:s') }}
                                 @else
                                     -
                                 @endif
@@ -185,7 +185,7 @@
                                     @if ($item->jam_keluar)
                                         @php
                                             try {
-                                                $jamKeluar = \Carbon\Carbon::parse($item->jam_keluar)->format('h:i A');
+                                                $jamKeluar = \Carbon\Carbon::parse($item->jam_keluar)->format('H:i:s');
                                             } catch (\Exception $e) {
                                                 $jamKeluar = '-';
                                             }
